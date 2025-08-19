@@ -1,0 +1,108 @@
+slices:
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [0, 0]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [0, 1]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [1, 2]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [2, 3]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [3, 4]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [4, 5]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [5, 6]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [6, 7]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [7, 8]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [8, 9]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [9, 10]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [10, 11]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [11, 12]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [12, 13]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [13, 14]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [14, 15]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [15, 16]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [16, 17]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [17, 18]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [18, 19]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [19, 20]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [20, 21]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [21, 22]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [22, 23]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [23, 24]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [24, 25]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [25, 26]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [26, 27]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [27, 28]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+        layer_range: [29, 29]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+        layer_range: [30, 30]
+
+
+post_weights:
+  - name: lm_head.weight
+    model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-3
+  - name: model.norm.weight
+    model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+
+pre_weights:
+  - name: model.embed_tokens.weight
+    model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Qwen2.5-7B-medqa-simulated/checkpoint-2
+
+merge_method: passthrough
+dtype: bfloat16
