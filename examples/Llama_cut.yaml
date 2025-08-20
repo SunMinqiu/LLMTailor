@@ -1,0 +1,30 @@
+slices:
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-1
+        layer_range: [0, 0]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-1
+        layer_range: [0, 16]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-2
+        layer_range: [16, 32]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-2
+        layer_range: [33, 33]
+  - sources:
+      - model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-1
+        layer_range: [34, 34]
+
+
+post_weights:
+  - name: lm_head.weight
+    model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-2
+  - name: model.embed_tokens.weight
+    model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-1
+
+pre_weights:
+  - name: model.norm.weight
+    model: /lvs0/rccs-hpbdrt/minqiu/Model_output/Llama3.1-8B-pubmed-merge_group2/checkpoint-1
+
+merge_method: passthrough
+dtype: bfloat16
