@@ -297,37 +297,98 @@ class MergePlanner:
                 module_name=module_name,
             )
 
+    # def plan_module(self, module_name: str, definition: OutputModuleDefinition):
+    #     self._current_module_layers = 0
+
+    #     module_arch = self._out_module_arch(module_name)
+    #     config_reader = ConfigReader(config=self.config, t=0, module=definition)
+    #     for weight_info in module_arch.pre_weights():
+    #         self.plan_tensor(
+    #             weight_info,
+    #             [weight_info] * len(definition.slices[0].sources),
+    #             [s.model for s in definition.slices[0].sources],
+    #             config_reader.for_tensor(tensor_name=weight_info.name).for_out_slice(
+    #                 definition.slices[0]
+    #             ),
+    #         )
+
+    #     for out_slice in definition.slices:
+    #         self.plan_slice(
+    #             out_slice,
+    #             module_def=definition,
+    #             module_name=module_name,
+    #         )
+        
+    #     for weight_info in module_arch.post_weights():
+    #         self.plan_tensor(
+    #             weight_info,
+    #             [weight_info] * len(definition.slices[0].sources),
+    #             [s.model for s in definition.slices[-1].sources],
+    #             config_reader.for_tensor(tensor_name=weight_info.name).for_out_slice(
+    #                 definition.slices[-1]
+    #             ),
+    #         )
     def plan_module(self, module_name: str, definition: OutputModuleDefinition):
         self._current_module_layers = 0
-
         module_arch = self._out_module_arch(module_name)
         config_reader = ConfigReader(config=self.config, t=0, module=definition)
 
-        for weight_info in module_arch.pre_weights():
-            self.plan_tensor(
-                weight_info,
-                [weight_info] * len(definition.slices[0].sources),
-                [s.model for s in definition.slices[0].sources],
-                config_reader.for_tensor(tensor_name=weight_info.name).for_out_slice(
-                    definition.slices[0]
-                ),
-            )
+        # ---- custom pre_weights (optional) ----
+        if getattr(self.config, "pre_weights", None):
+            for pre in self.config.pre_weights:
+                # 构造 WeightInfo
+                weight_info = WeightInfo(
+                    name=pre.name,
+                    # 其它参数按需补全
+                )
+                self.plan_tensor(
+                    weight_info,
+                    [weight_info],
+                    [pre.model],  # 只用你指定的模型
+                    ConfigReader(
+                        config=self.config,
+                        t=0,
+                        tensor_name=pre.name,
+                    ).for_out_slice(definition.slices[0]),
+                )
+        else:
+            for w in module_arch.pre_weights():
+                self.plan_tensor(
+                    w,
+                    [w] * len(definition.slices[0].sources),
+                    [s.model for s in definition.slices[0].sources],
+                    config_reader.for_tensor(tensor_name=w.name).for_out_slice(definition.slices[0]),
+                )
 
+        # slices
         for out_slice in definition.slices:
-            self.plan_slice(
-                out_slice,
-                module_def=definition,
-                module_name=module_name,
-            )
+            self.plan_slice(out_slice, module_def=definition, module_name=module_name)
 
-        for weight_info in module_arch.post_weights():
-            self.plan_tensor(
-                weight_info,
-                [weight_info] * len(definition.slices[0].sources),
-                [s.model for s in definition.slices[-1].sources],
-                config_reader.for_tensor(tensor_name=weight_info.name).for_out_slice(
-                    definition.slices[-1]
-                ),
+        # ---- custom post_weights (optional) ----
+        if getattr(self.config, "post_weights", None):
+            for post in self.config.post_weights:
+                # 构造 WeightInfo
+                weight_info = WeightInfo(
+                    name=post.name,
+                    # 其它参数按需补全
+                )
+                self.plan_tensor(
+                    weight_info,
+                    [weight_info],
+                    [post.model],  # 只用你指定的模型
+                    ConfigReader(
+                        config=self.config,
+                        t=0,
+                        tensor_name=post.name,
+                    ).for_out_slice(definition.slices[-1]),
+                )
+        else:
+            for w in module_arch.post_weights():
+                self.plan_tensor(
+                    w,
+                    [w] * len(definition.slices[0].sources),
+                    [s.model for s in definition.slices[-1].sources],
+                    config_reader.for_tensor(tensor_name=w.name).for_out_slice(definition.slices[-1]),
             )
 
     def plan_to_disk(self, out_path: str) -> List[Task]:
@@ -375,73 +436,6 @@ class MergePlanner:
     def _plan(self):
         self.normalize_config()
         self._tasks = []
-
-        # process pre_weights first
-        if hasattr(self.config, "pre_weights") and self.config.pre_weights:
-            # print(f"pre_weights: {self.config.pre_weights}!!!!!")
-            for pre in self.config.pre_weights:
-                # construct WeightInfo
-                weight_info = WeightInfo(
-                    name=pre.name,
-                    # other parameters as needed
-                )
-                self.plan_tensor(
-                    weight_info,
-                    [weight_info],
-                    [pre.model],  # only use the specified model
-                    ConfigReader(
-                        config=self.config,
-                        t=0,
-                        tensor_name=pre.name,
-                    ).for_out_slice(self.config.slices[0]),
-                )
-        else:
-            # fallback: original logic
-            for weight_info in self.arch_info.pre_weights(config=self.out_model_config):
-                self.plan_tensor(
-                    weight_info,
-                    [weight_info] * len(self.config.slices[0].sources),
-                    [s.model for s in self.config.slices[0].sources],
-                    ConfigReader(
-                        config=self.config,
-                        t=0,
-                        tensor_name=weight_info.name,
-                    ).for_out_slice(self.config.slices[0]),
-                )
-
-        for out_slice in self.config.slices:
-            self.plan_slice(out_slice)
-
-        if hasattr(self.config, "post_weights") and self.config.post_weights:
-            # print(f"post_weights: {self.config.post_weights}!!!!!")
-            for post in self.config.post_weights:
-                # construct WeightInfo
-                weight_info = WeightInfo(
-                    name=post.name,
-                    # other parameters as needed
-                )
-                self.plan_tensor(
-                    weight_info,
-                    [weight_info],
-                    [post.model],  # only use the specified model
-                    ConfigReader(
-                        config=self.config,
-                        t=0,
-                        tensor_name=post.name,
-                    ).for_out_slice(self.config.slices[0]),
-                )
-        else:
-            for weight_info in self.arch_info.post_weights(config=self.out_model_config):
-                self.plan_tensor(
-                    weight_info,
-                    [weight_info] * len(self.config.slices[-1].sources),
-                    [s.model for s in self.config.slices[-1].sources],
-                    ConfigReader(
-                        config=self.config,
-                        t=1,
-                        tensor_name=weight_info.name,
-                    ).for_out_slice(self.config.slices[-1]),
-                )
 
         for module_name in self.config.modules:
             self.plan_module(module_name, self.config.modules[module_name])

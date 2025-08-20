@@ -6,12 +6,14 @@
     "pre_weights": [
         {
             "name": "model.embed_tokens.weight",
-            "is_embed": true
+            "is_embed": true,
+            "optional": true
         }
     ],
     "post_weights": [
         {
-            "name": "model.norm.weight"
+            "name": "model.norm.weight",
+            "optional": true
         },
         {
             "name": "lm_head.weight",

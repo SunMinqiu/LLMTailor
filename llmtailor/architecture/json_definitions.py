@@ -172,7 +172,7 @@ def _load_all_architectures() -> (
     Tuple[List[ModelArchitecture], Dict[str, List[ModelArchitecture]]]
 ):
     architectures: List[ModelArchitecture] = []
-    for f in importlib.resources.files(mergekit._data.architectures).iterdir():
+    for f in importlib.resources.files(llmtailor._data.architectures).iterdir():
         if f.is_file() and f.name.lower().endswith(".json"):
             text = f.read_text()
             architectures.append(_load_architecture_json(text))

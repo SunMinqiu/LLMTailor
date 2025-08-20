@@ -8,7 +8,8 @@
         {
             "name": "model.embed_tokens.weight",
             "is_embed": true,
-            "output_space": "running_residual"
+            "output_space": "running_residual",
+            "optional": true
         }
     ],
     "num_layers_config_key": "num_hidden_layers",
@@ -68,7 +69,8 @@
     "post_weights": [
         {
             "name": "model.norm.weight",
-            "input_space": "running_residual"
+            "input_space": "running_residual",
+            "optional": true
         },
         {
             "name": "lm_head.weight",

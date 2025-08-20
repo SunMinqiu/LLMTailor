@@ -9,7 +9,7 @@ import shutil
 from collections import Counter
 from typing import List, Optional, Tuple
 
-import tqdm
+from tqdm import tqdm
 import transformers
 
 from collections import Counter, defaultdict
@@ -130,7 +130,7 @@ def run_merge(
     LOG.info("Planning operations")
 
 
-    #########################################    #########################################
+    #########################################
     # Merge optimizer states
     #########################################   
 

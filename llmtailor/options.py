@@ -37,6 +37,7 @@ class MergeOptions(BaseModel, frozen=True):
     multi_gpu: bool = False
     num_threads: Optional[int] = None
     gpu_rich: bool = False
+    num_gpus: int = 8
 
     def apply_global_options(self):
         if self.verbosity > 1:
