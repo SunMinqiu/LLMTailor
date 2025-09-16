@@ -52,7 +52,7 @@ For the benchmark, we use the open source project called [lm-evaluation-harness]
 
 ## Quick Start
 1. The example can be found in the /examples folder.
->> **Note:** The goal of LLMTailor is a tool that support merging layer-wise checkpoints. If you only want to merge default checkpoints, please comment the first part of code in start_merge.py 
+> **Note:** The goal of LLMTailor is a tool that support merging layer-wise checkpoints. If you only want to merge default checkpoints, please comment the first part of code in start_merge.py 
 2. Modify the YAML file to whatever you like.
 3. Modify the configuration in the top of this start_merge.py file. (e.g. CHECKPOINT_PATH)
 4. Run this python file.
