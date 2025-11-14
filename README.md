@@ -15,12 +15,23 @@ LLMTailor is an enhanced fork of [mergekit](https://github.com/arcee-ai/mergekit
 ## Citing LLMTailor
 The relevant research paper will be published at PDSW25. If you reference or use LLMTailor in your research, please cite:
 ```
-@inproceedings{sun2025llmtailor,
-  author    = {Minqiu Sun and Xin Huang and Luanzheng Guo and Nathan R. Tallent and Kento Sato and Dong Dai},
-  title     = {{LLMTailor: A Layer-wise Tailoring Tool for Efficient Checkpointing of Large Language Models}},
-  booktitle = {Proceedings of the 10th International Parallel Data Systems Workshop (PDSW'25)},
-  year      = {2025},
-  note      = {To appear},
+@inproceedings{10.1145/3731599.3767515,
+author = {Sun, Minqiu and Huang, Xin and Guo, Luanzheng and Tallent, Nathan R. and Sato, Kento and Dai, Dong},
+title = {LLMTailor: A Layer-wise Tailoring Tool for Efficient Checkpointing of Large Language Models},
+year = {2025},
+isbn = {9798400718717},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3731599.3767515},
+doi = {10.1145/3731599.3767515},
+abstract = {Checkpointing is essential for fault tolerance in training large language models (LLMs). However, existing methods, regardless of their I/O strategies, periodically store the entire model and optimizer states, incurring substantial storage overhead and resource contention. Recent studies reveal that updates across LLM layers are highly non-uniform. Across training steps, some layers may undergo more significant changes, while others remain relatively stable or even unchanged. This suggests that selectively checkpointing only layers with significant updates could reduce overhead without harming training. Implementing such selective strategies requires fine-grained control over both weights and optimizer states, which no current tool provides. To address this gap, we propose LLMTailor, a checkpoint-merging framework that filters and assembles layers from different checkpoints to form a composite checkpoint. Our evaluation indicates that LLMTailor can work with different selective checkpointing strategies and effectively reduce checkpoint size (e.g., 4.3 times smaller for Llama3.1-8B) and checkpoint time (e.g., 2.8 times faster for Qwen2.5-7B) while maintaining model quality.},
+booktitle = {Proceedings of the SC '25 Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis},
+pages = {1366–1374},
+numpages = {9},
+keywords = {Checkpoint, Large Language Model, I/O optimization},
+location = {
+},
+series = {SC Workshops '25}
 }
 ```
 
