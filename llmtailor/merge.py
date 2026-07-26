@@ -98,6 +98,7 @@ def run_merge(
     out_path: str,
     options: MergeOptions,
     config_source: Optional[str] = None,
+    failure_step: Optional[int] = None,
 ):
     if options.random_seed is not None:
         transformers.trainer_utils.set_seed(options.random_seed)
@@ -327,6 +328,37 @@ def run_merge(
     
     tag_list = [get_tag_from_path(model_path) for model_path in model_list]
     tag_list = sorted(tag_list, key=lambda tag: int(tag.replace("global_step", "")))
+
+    # ========== 预检查：检测是否需要偏移 ==========
+    # 串行检查每个checkpoint，从第一个不存在的开始，后面的都+1偏移
+    current_offset = 0
+    model_to_final_tag = {}
+    final_tag_list = []
+
+    for i, (model_path, original_tag) in enumerate(zip(model_list, tag_list)):
+        # 计算当前应该使用的tag（原始tag + 当前偏移量）
+        step_num = int(original_tag.replace("global_step", ""))
+        candidate_tag = f"global_step{step_num + current_offset}"
+        candidate_ckpt = _get_rank_zero_ckpt_name(model_path, candidate_tag, mp_rank=0, dp_rank=0)
+
+        if os.path.exists(candidate_ckpt):
+            # 存在，直接使用
+            model_to_final_tag[model_path] = candidate_tag
+            final_tag_list.append(candidate_tag)
+        else:
+            # 不存在，尝试+1
+            next_tag = f"global_step{step_num + current_offset + 1}"
+            next_ckpt = _get_rank_zero_ckpt_name(model_path, next_tag, mp_rank=0, dp_rank=0)
+            if os.path.exists(next_ckpt):
+                current_offset += 1
+                model_to_final_tag[model_path] = next_tag
+                final_tag_list.append(next_tag)
+                LOG.info(f"Checkpoint {original_tag} not found for {model_path}, shifted to {next_tag}. Current offset: {current_offset}")
+            else:
+                raise RuntimeError(f"Cannot find checkpoint for {model_path}, tried {candidate_tag} and {next_tag}")
+
+    tag_list = final_tag_list
+
     tag_last = tag_list[-1]
 
     new_optimizer_path = os.path.join(out_path, str(tag_last))
@@ -358,7 +390,8 @@ def run_merge(
     for idx, map in enumerate(model_layer_map):
         model_path = list(map.keys())[0]
         original_ranges = list(map.values())[0]
-        tag = get_tag_from_path(model_path)
+        # 使用预计算的tag映射（已包含全局偏移）
+        tag = model_to_final_tag.get(model_path, get_tag_from_path(model_path))
         # Calculate new ranges based on accumulated values
         if new_ranges != []:
             start_range = accumulated_range_end
@@ -371,19 +404,12 @@ def run_merge(
         else:
             new_ranges[model_path] = [[(0, original_ranges[1] - original_ranges[0]), original_ranges]]
             accumulated_range_end = original_ranges[1] - original_ranges[0]
-        try:    
-            zero_sd_list = _get_all_zero_checkpoints(load_dir=model_path, tag=tag)
-            optimizer_states[model_path] = {
-                'states': zero_sd_list,
-                'ranges': new_ranges[model_path]
-            }
-        except Exception as e:
-            tag = get_tag_from_path(model_path, flag = False)
-            zero_sd_list = _get_all_zero_checkpoints(load_dir=model_path, tag=tag)
-            optimizer_states[model_path] = {
-                'states': zero_sd_list,
-                'ranges': new_ranges[model_path]
-            }
+
+        zero_sd_list = _get_all_zero_checkpoints(load_dir=model_path, tag=tag)
+        optimizer_states[model_path] = {
+            'states': zero_sd_list,
+            'ranges': new_ranges[model_path]
+        }
     print(new_ranges)
 
     # create the scheduler
@@ -442,7 +468,7 @@ def run_merge(
                     old_end_layer = layer_range[1][1]
                     # print(new_init_layer, new_end_layer, old_init_layer, old_end_layer)
 
-                    # add the token_embedded and norm_layer
+                    # add norm_layer [0,0] and embed [N+1,N+1] (tied with lm_head)
                     if old_init_layer == old_end_layer and old_init_layer == 0:
                         new_state_dict[0] = loaded_state_dict['state'][0]
                         new_param_groups_value[0] = loaded_param_groups[0]
@@ -452,7 +478,7 @@ def run_merge(
                         new_state_dict[num_hidden_layers+1] = loaded_state_dict['state'][num_hidden_layers+1]
                         new_param_groups_value[num_hidden_layers+1] = [g for g in loaded_param_groups if g["params"][0] == num_hidden_layers+1][0]
                         new_fp32_flat_groups[num_hidden_layers+1] = loaded_fp32_flat_groups[loaded_param_groups.index([g for g in loaded_param_groups if g["params"][0] == num_hidden_layers+1][0])]
-                    
+
                     if old_init_layer != old_end_layer:
                         for k in range(new_init_layer, new_end_layer):
                             # get the source index by the relative position
@@ -476,12 +502,21 @@ def run_merge(
             # sort the new_state_dict by the key
             new_state_dict = dict(sorted(new_state_dict.items()))
 
+            # Unify step counts across all params to the resume step.
+            # Without this, each param keeps the step from its source checkpoint,
+            # causing inconsistent Adam bias correction (bc₂ = 1-β₂^step) across
+            # layers — up to ~20% effective learning rate difference.
+            unified_step = failure_step if failure_step is not None else int(tag_last.replace("global_step", ""))
+            for pid in new_state_dict:
+                if 'step' in new_state_dict[pid]:
+                    new_state_dict[pid]['step'] = unified_step
+
             # Combine state dict with param groups
             new_optimizer = {
                 'state': new_state_dict,
                 'param_groups': new_param_groups_value
             }
-            
+
             inside_state = {
                 OPTIMIZER_STATE_DICT: new_optimizer,
                 FP32_FLAT_GROUPS: new_fp32_flat_groups,
@@ -491,7 +526,7 @@ def run_merge(
                 OVERFLOW: overflow,
                 PARTITION_COUNT: partition_count
             }
-            
+
             ds_config, ds_version = _get_ds_config(model_path, tag)
 
             save_state = {'optimizer_state_dict': inside_state, DS_CONFIG: ds_config, DS_VERSION: ds_version}
@@ -531,7 +566,7 @@ def run_merge(
                     old_end_layer = layer_range[1][1]
                     # print(new_init_layer, new_end_layer, old_init_layer, old_end_layer)
 
-                    # add the token_embedded and norm_layer
+                    # add norm_layer [0,0], lm_head [N+1,N+1], and embed [N+2,N+2]
                     if old_init_layer == old_end_layer and old_init_layer == 0:
                         new_state_dict[0] = loaded_state_dict['state'][0]
                         new_param_groups_value[0] = loaded_param_groups[0]
@@ -570,12 +605,18 @@ def run_merge(
             # sort the new_state_dict by the key
             new_state_dict = dict(sorted(new_state_dict.items()))
 
+            # Unify step counts (same fix as tie_word_embeddings=True branch)
+            unified_step = failure_step if failure_step is not None else int(tag_last.replace("global_step", ""))
+            for pid in new_state_dict:
+                if 'step' in new_state_dict[pid]:
+                    new_state_dict[pid]['step'] = unified_step
+
             # Combine state dict with param groups
             new_optimizer = {
                 'state': new_state_dict,
                 'param_groups': new_param_groups_value
             }
-            
+
             inside_state = {
                 OPTIMIZER_STATE_DICT: new_optimizer,
                 FP32_FLAT_GROUPS: new_fp32_flat_groups,
@@ -585,7 +626,7 @@ def run_merge(
                 OVERFLOW: overflow,
                 PARTITION_COUNT: partition_count
             }
-            
+
             ds_config, ds_version = _get_ds_config(model_path, tag)
 
             save_state = {'optimizer_state_dict': inside_state, DS_CONFIG: ds_config, DS_VERSION: ds_version}

@@ -102,6 +102,9 @@ class TensorWriter:
             if total_shards < 2:
                 name_remap[f"{prefix}-1.{extension}"] = f"{prefix}.{extension}"
 
+            # 等待文件系统同步（针对网络文件系统如 Lustre/GPFS）
+            os.sync()
+
             for old_name, new_name in name_remap.items():
                 os.rename(
                     os.path.join(self.out_path, old_name),

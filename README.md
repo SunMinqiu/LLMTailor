@@ -51,6 +51,11 @@ cd LLMTailor
 pip install -r requirements.txt
 pip install -e .
 ```
+### Required Hardware
+- GPU: 
+- CPU: At least 32 cores
+- Memory: At least 200 GB
+- Storage: Depending on the model and training epochs, recommend at least at least 350 GB for a 7B model and 700 GB for 14B model.
 
 - Benchmark Running
 For the benchmark, we use the open source project called [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness/tree/main). Please follow the instructions of this project to install.
@@ -62,8 +67,128 @@ For the benchmark, we use the open source project called [lm-evaluation-harness]
 - Storage: Depending on the model and training epochs, recommend at least at least 350 GB for a 7B model and 700 GB for 14B model.
 
 ## Quick Start
-1. The example can be found in the /examples folder.
-> **Note:** The goal of LLMTailor is a tool that support merging layer-wise checkpoints. If you only want to merge default checkpoints, please comment the first part of code in start_merge.py 
-2. Modify the YAML file to whatever you like.
-3. Modify the configuration in the top of this start_merge.py file. (e.g. CHECKPOINT_PATH)
-4. Run this python file.
+
+LLMTailor supports three usage modes:
+
+### Mode 1: Use Your Own YAML Config (Manual Merge)
+
+If you already have a YAML configuration file, you can run the merge directly:
+
+```bash
+python examples/start_merge.py \
+    --config_yml "path/to/your_config.yaml" \
+    --output_path "path/to/output_model" \
+    --num_gpu 8
+```
+
+Example YAML config (`examples/Qwen_cut.yaml`):
+```yaml
+slices:
+  - sources:
+      - model: /path/to/checkpoint-100
+        layer_range: [0, 14]
+  - sources:
+      - model: /path/to/checkpoint-200
+        layer_range: [14, 28]
+
+merge_method: passthrough
+dtype: bfloat16
+```
+
+### Mode 2: Generate YAML Only (Dry Run)
+
+Use `--dry_run` to generate the YAML config from StreamCheck logs without running the merge. This is useful for reviewing the configuration before merging.
+
+```bash
+python examples/start_merge.py \
+    --streamcheck_json "path/to/checkpoint_flags.jsonl" \
+    --streamcheck_path "path/to/checkpoints" \
+    --config_yml "output_config.yaml" \
+    --failure_step 500 \
+    --total_layers 28 \
+    --dry_run
+```
+
+This will:
+1. Parse the `checkpoint_flags.jsonl` to find the best checkpoint for each layer
+2. Generate a YAML config file at the specified path
+3. Exit without running the merge
+
+You can then review the generated YAML and run Mode 1 to execute the merge.
+
+### Mode 3: One-Stop Service (Generate + Merge)
+
+Run the complete pipeline: generate YAML from StreamCheck logs and execute the merge in one command.
+
+```bash
+python examples/start_merge.py \
+    --streamcheck_json "path/to/checkpoint_flags.jsonl" \
+    --streamcheck_path "path/to/checkpoints" \
+    --config_yml "output_config.yaml" \
+    --output_path "path/to/merged_model" \
+    --failure_step 500 \
+    --total_layers 28 \
+    --num_gpu 8
+```
+
+### Using the Shell Script
+
+The shell script `examples/start_merge.sh` supports all parameters via command line:
+
+```bash
+# Show all available options
+bash examples/start_merge.sh --help
+```
+
+**Mode 1: Use existing YAML config**
+```bash
+bash examples/start_merge.sh \
+    --config_yml /path/to/your_config.yaml \
+    --output_path /path/to/merged_model \
+    --num_gpu 8
+```
+
+**Mode 2: Generate YAML only (dry run)**
+```bash
+bash examples/start_merge.sh \
+    --streamcheck_json /path/to/checkpoint_flags.jsonl \
+    --streamcheck_path /path/to/checkpoints \
+    --config_yml /path/to/output_config.yaml \
+    --failure_step 500 \
+    --total_layers 28 \
+    --dry_run
+```
+
+**Mode 3: One-stop service (all parameters)**
+```bash
+bash examples/start_merge.sh \
+    --streamcheck_json /path/to/checkpoint_flags.jsonl \
+    --streamcheck_path /path/to/checkpoints \
+    --config_yml /path/to/output_config.yaml \
+    --output_path /path/to/merged_model \
+    --failure_step 500 \
+    --total_layers 28 \
+    --num_gpu 8 \
+    --lora_merge_cache /tmp/cache \
+    --copy_tokenizer true \
+    --lazy_unpickle false \
+    --low_cpu_memory false
+```
+
+### Command Line Arguments
+
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `--config_yml` | Path to YAML merge config | `examples/Qwen_cut.yaml` |
+| `--output_path` | Output path for merged model | Required |
+| `--streamcheck_json` | Path to `checkpoint_flags.jsonl` | None |
+| `--streamcheck_path` | Path to checkpoints directory | None |
+| `--failure_step` | Step number for base checkpoint | 160 |
+| `--total_layers` | Number of transformer layers | 28 |
+| `--num_gpu` | Number of GPUs to use | 8 |
+| `--dry_run` | Only generate YAML, skip merge | False |
+| `--copy_tokenizer` | Copy tokenizer to output | True |
+| `--lazy_unpickle` | Low-memory model loader | False |
+| `--low_cpu_memory` | Use when VRAM > RAM | False |
+
+
